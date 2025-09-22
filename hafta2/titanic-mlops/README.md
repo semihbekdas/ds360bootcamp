@@ -7,19 +7,32 @@ Titanic veri seti ile kapsamlı MLOps pipeline örneği. Bu proje DVC, MLflow, F
 ```
 titanic-mlops/
 ├── src/                        # Kaynak kodlar
-│   ├── data_preparation.py     # Veri hazırlama
+│   ├── api.py                  # FastAPI servisi
+│   ├── clean_data.py           # Veri temizleme
+│   ├── download_data.py        # Veri indirme
 │   ├── train_model.py          # Model eğitimi
-│   ├── train_model_mlflow.py   # MLflow ile eğitim
-│   └── api.py                  # FastAPI servisi
+│   └── train_model_mlflow.py   # MLflow ile eğitim
 ├── data/                       # Veri dosyaları
 │   ├── raw/                    # Ham veri
 │   └── processed/              # İşlenmiş veri
 ├── models/                     # Eğitilmiş modeller
+│   ├── features.json           # Model özellikleri
+│   └── metrics.json            # Model metrikleri
 ├── tests/                      # Test dosyaları
+│   └── test_model.py           # Model testleri
+├── notebooks/                  # Jupyter notebook'lar
+├── mlruns/                     # MLflow deney kayıtları
 ├── .github/workflows/          # CI/CD pipeline
+│   └── ci.yml                  # GitHub Actions workflow
+├── .dvc/                       # DVC yapılandırması
 ├── dvc.yaml                    # DVC pipeline
+├── dvc.lock                    # DVC lock dosyası
+├── .dvcignore                  # DVC ignore dosyası
+├── .dockerignore               # Docker ignore dosyası
 ├── Dockerfile                  # Docker yapılandırması
-└── requirements.txt            # Python bağımlılıkları
+├── requirements.txt            # Python bağımlılıkları
+├── test_api.py                 # API testleri
+└── README.md                   # Proje dokümantasyonu
 ```
 
 ## 🚀 Hızlı Başlangıç
@@ -172,7 +185,7 @@ curl -X POST "http://localhost:8000/predict" \\
 
 Pipeline aşamaları:
 
-1. **data_preparation**: Ham veri oluştur ve işle
+1. **data_preparation**: Veri indirme ve temizleme
 2. **train_model**: Model eğit ve kaydet
 
 ```bash
@@ -227,7 +240,7 @@ En iyi performanslı model (Logistic Regression) API'de kullanılır.
 
 ### Yeni Özellik Eklemek
 
-1. `src/data_preparation.py` dosyasını güncelle
+1. `src/clean_data.py` veya `src/download_data.py` dosyasını güncelle
 2. Model eğitimini tekrarla
 3. API endpoint'ini güncelle
 
