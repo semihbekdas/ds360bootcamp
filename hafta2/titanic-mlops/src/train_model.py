@@ -76,6 +76,7 @@ def train_model(model_type='random_forest'):
     # Detaylı rapor
     print("\n📈 Classification Report:")
     print(classification_report(y_test, y_pred))
+    print("burda sadece değişiklik var")
     
     return model, metrics
 

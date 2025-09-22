@@ -53,6 +53,7 @@ def clean_titanic_data(input_path='data/raw/titanic.csv', output_path='data/proc
     print(f"Orijinal boyut: {df.shape}")
     print(f"Temizlenmiş boyut: {df_clean.shape}")
     print(f"Eksik değerler:\n{df_clean.isnull().sum().sum()} toplam eksik değer")
+    print("merhaba ey değişiklik")
     
     # Özellik listesini döndür
     features = ['pclass', 'sex_encoded', 'age', 'sibsp', 'parch', 
