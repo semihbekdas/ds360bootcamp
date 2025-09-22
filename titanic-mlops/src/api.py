@@ -14,13 +14,13 @@ app = FastAPI(
 
 # Veri modelleri
 class PassengerData(BaseModel):
-    Pclass: int  # 1, 2, veya 3
-    Sex: str     # 'male' veya 'female'
-    Age: float
-    SibSp: int   # Kardeş/eş sayısı
-    Parch: int   # Ebeveyn/çocuk sayısı
-    Fare: float
-    Embarked: str  # 'S', 'C', veya 'Q'
+    pclass: int  # 1, 2, veya 3
+    sex: str     # 'male' veya 'female'
+    age: float
+    sibsp: int   # Kardeş/eş sayısı
+    parch: int   # Ebeveyn/çocuk sayısı
+    fare: float
+    embarked: str  # 'S', 'C', veya 'Q'
 
 class PredictionResponse(BaseModel):
     survived_probability: float
@@ -54,27 +54,38 @@ def preprocess_passenger_data(passenger: PassengerData):
     """Yolcu verisini model için hazırla"""
     
     # Sex encoding (male=1, female=0)
-    sex_encoded = 1 if passenger.Sex.lower() == 'male' else 0
+    sex_encoded = 1 if passenger.sex.lower() == 'male' else 0
     
     # Embarked encoding (S=0, C=1, Q=2)
     embarked_map = {'S': 0, 'C': 1, 'Q': 2}
-    embarked_encoded = embarked_map.get(passenger.Embarked.upper(), 0)
+    embarked_encoded = embarked_map.get(passenger.embarked.upper(), 0)
     
     # Yeni özellikler
-    family_size = passenger.SibSp + passenger.Parch + 1
+    family_size = passenger.sibsp + passenger.parch + 1
     is_alone = 1 if family_size == 1 else 0
     
-    # Özellik vektörü oluştur
+    # Yaş grubu encoding
+    if passenger.age <= 18:
+        age_group_encoded = 0  # child
+    elif passenger.age <= 35:
+        age_group_encoded = 1  # young_adult
+    elif passenger.age <= 60:
+        age_group_encoded = 2  # adult
+    else:
+        age_group_encoded = 3  # senior
+    
+    # Özellik vektörü oluştur - clean_data.py'deki sıraya göre
     feature_vector = [
-        passenger.Pclass,      # Pclass
-        sex_encoded,           # Sex_encoded
-        passenger.Age,         # Age
-        passenger.SibSp,       # SibSp
-        passenger.Parch,       # Parch
-        passenger.Fare,        # Fare
-        embarked_encoded,      # Embarked_encoded
-        family_size,           # FamilySize
-        is_alone              # IsAlone
+        passenger.pclass,      # pclass
+        sex_encoded,           # sex_encoded
+        passenger.age,         # age
+        passenger.sibsp,       # sibsp
+        passenger.parch,       # parch
+        passenger.fare,        # fare
+        embarked_encoded,      # embarked_encoded
+        family_size,           # family_size
+        is_alone,              # is_alone
+        age_group_encoded      # age_group_encoded
     ]
     
     return np.array(feature_vector).reshape(1, -1)
@@ -150,7 +161,7 @@ async def predict_survival(passenger: PassengerData):
         return PredictionResponse(
             survived_probability=survived_prob,
             survival_prediction=survival_text,
-            passenger_class=passenger.Pclass
+            passenger_class=passenger.pclass
         )
         
     except Exception as e:
@@ -161,13 +172,13 @@ async def prediction_example():
     """Örnek tahmin isteği"""
     return {
         "example_request": {
-            "Pclass": 3,
-            "Sex": "male",
-            "Age": 25.0,
-            "SibSp": 0,
-            "Parch": 0,
-            "Fare": 8.5,
-            "Embarked": "S"
+            "pclass": 3,
+            "sex": "male",
+            "age": 25.0,
+            "sibsp": 0,
+            "parch": 0,
+            "fare": 8.5,
+            "embarked": "S"
         },
         "how_to_use": "POST /predict ile yukarıdaki formatı kullanın"
     }

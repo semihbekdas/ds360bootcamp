@@ -1,10 +1,17 @@
 stages:
-  data_preparation:
-    cmd: python src/data_preparation.py
+  download_data:
+    cmd: python src/download_data.py
     deps:
-    - src/data_preparation.py
+    - src/download_data.py
     outs:
     - data/raw/titanic.csv
+
+  clean_data:
+    cmd: python src/clean_data.py
+    deps:
+    - src/clean_data.py
+    - data/raw/titanic.csv
+    outs:
     - data/processed/titanic_processed.csv
 
   train_model:

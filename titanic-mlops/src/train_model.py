@@ -14,11 +14,11 @@ def train_model(model_type='random_forest'):
     # İşlenmiş veriyi yükle
     df = pd.read_csv('data/processed/titanic_processed.csv')
     
-    # X ve y'yi ayır
-    feature_cols = ['Pclass', 'Sex_encoded', 'Age', 'SibSp', 'Parch', 
-                   'Fare', 'Embarked_encoded', 'FamilySize', 'IsAlone']
+    # X ve y'yi ayır - seaborn dataset kolonlarına göre güncellendi
+    feature_cols = ['pclass', 'sex_encoded', 'age', 'sibsp', 'parch', 
+                   'fare', 'embarked_encoded', 'family_size', 'is_alone', 'age_group_encoded']
     X = df[feature_cols]
-    y = df['Survived']
+    y = df['survived']
     
     # Train-test split
     X_train, X_test, y_train, y_test = train_test_split(
