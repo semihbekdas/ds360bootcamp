@@ -9,11 +9,10 @@ st.set_page_config(page_title="Loan Risk Analysis", layout="centered", page_icon
 st.title("💳 Loan Risk Panel — Canlı Skor")
 
 # ========= AYAR =========
-MODEL_PATH  = "artifacts/model_xgb_smote.pkl"        # sadece model
-SCHEMA_PATH = "artifacts/feature_schema_smote.json"  # SMOTE şeması
-PRE_PATH    = "artifacts/preprocessor_smote.pkl"     # ön-işlemci
+MODEL_PATH  = "../artifacts/model_xgb_smote.pkl"        # sadece model
+SCHEMA_PATH = "../artifacts/feature_schema_smote.json"  # SMOTE şeması
+PRE_PATH    = "../artifacts/preprocessor_smote.pkl"     # ön-işlemci
 
-# Eğer pre ayrıysa ayrıca PRE_PATH yükle ve predict öncesi pre.transform() yap (aşağıda not var)
 
 @st.cache_resource
 def load_artifacts():
