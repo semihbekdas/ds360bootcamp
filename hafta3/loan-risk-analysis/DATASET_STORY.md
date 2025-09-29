@@ -1,83 +1,126 @@
-# 📖 Veri Seti Hikayesi: Loan Risk Analysis
+
+# 📖 Veri Seti Hikayesi: Loan Risk Dataset
 
 ## 🏦 Senaryo
 
-Bir fintech şirketi olan **FinanceFlow**, kredi başvurularını değerlendirmek için makine öğrenmesi tabanlı bir risk analiz sistemi geliştirmek istiyor. Şirket, manuel kredi değerlendirme sürecini otomatikleştirerek:
+Bir fintech girişimi, kısa vadeli kredi (loan) başvurularının **geri ödenip ödenmeyeceğini** tahmin eden bir sistem geliştirmek istiyor. Amaç, kredi riskini baştan öngörerek:
 
-- ⚡ Daha hızlı karar verme
-- 📊 Objektif risk değerlendirmesi  
-- 💰 Kredi kayıplarını minimize etme
-- 🎯 Doğru müşteri segmentasyonu
+* ⚡ Karar sürecini hızlandırmak
+* 📊 Daha objektif kredi değerlendirmesi yapmak
+* 💰 Kredi kayıplarını azaltmak
+* 🎯 Daha doğru müşteri segmentasyonu sağlamak
 
-hedeflerine ulaşmak istiyor.
+---
 
-## 📊 Veri Seti: "Loan Data"
+## 📊 Veri Seti: "Loan Risk Data"
 
-**Kaynak**: Kaggle - zhijinzhai/loandata
+**Kaynak**: Kaggle – *Loan Prediction / Loan Risk* datasetleri
+**Yapı**: Her satır bir kredi başvurusunu temsil eder.
 
-### 👥 Veri Hikayesi
-Bu veri seti, bir ABD merkezli kredi şirketinin 2007-2018 yılları arasındaki **gerçek kredi başvuru verilerini** içeriyor. Her satır bir kredi başvurusunu temsil ediyor ve şu bilgileri içeriyor:
+### 👥 Demografik Bilgiler
 
-### 📝 Temel Özellikler
+* **age**: Başvuru sahibinin yaşı
+* **education**: Eğitim seviyesi (`High School`, `College`, `Bachelor`, `Master or Above`)
+* **Gender**: Cinsiyet (`male`, `female`)
 
-#### 👤 **Demografik Bilgiler**
-- **age**: Başvuru sahibinin yaşı
-- **employment_length**: İş deneyimi süresi (yıl)
-- **home_ownership**: Ev sahipliği durumu (rent/own/mortgage)
+### 💰 Finansal Bilgiler
 
-#### 💰 **Finansal Bilgiler**  
-- **income**: Yıllık gelir ($)
-- **loan_amount**: Talep edilen kredi miktarı ($)
-- **credit_score**: Kredi skoru (300-850 arası)
+* **Principal**: Çekilen kredi tutarı
+* **terms**: Vade süresi (gün cinsinden; 7, 15 veya 30 gün)
+* **principal_per_term**: Bir dönem başına düşen kredi tutarı (türetilmiş değişken)
 
-#### 🎯 **Kredi Detayları**
-- **loan_purpose**: Kredi kullanım amacı
-  - `home`: Ev kredisi
-  - `auto`: Araba kredisi  
-  - `education`: Eğitim kredisi
-  - `business`: İş kredisi
-  - `personal`: Kişisel kredi
+### 📅 Tarih Bilgileri
 
-#### ⚠️ **Target Değişken**
-- **default**: Kredi geri ödememe durumu
-  - `0`: Kredi düzenli ödenmiş (İyi müşteri)
-  - `1`: Kredi ödenememiş (Riskli müşteri)
+* **effective_date**: Kredinin başladığı tarih
+* **due_date**: Kredinin geri ödenmesi gereken tarih
+* **planned_term_days**: Planlanan süre (due - effective, gün cinsinden; türetilmiş değişken)
+
+### ⚠️ Hedef Değişken
+
+* **paid** / **default**: Kredinin ödenip ödenmediği
+
+  * `1`: Kredi zamanında ödenmiş (**iyi müşteri**)
+  * `0`: Kredi ödenmemiş (**riskli müşteri**)
+
+---
 
 ## 🎭 Gerçek Dünya Senaryosu
 
 ### 📈 İş Problemi
-1. **Dengesiz Veri**: Gerçek hayatta kredilerin %85-90'ı düzenli ödenir
-2. **Yanlış Pozitif Maliyeti**: İyi müşteriyi reddetmek → gelir kaybı
-3. **Yanlış Negatif Maliyeti**: Kötü müşteriyi kabul etmek → kredi kaybı
-4. **Düzenleyici Uyum**: Adil kredi politikaları gerekiyor
 
-### 🔍 Analiz Hedefleri
+1. **Dengesiz Veri**: Çoğu müşteri krediyi ödüyor, az sayıda müşteri ödeyemiyor.
+2. **Yanlış Pozitif Maliyeti**: İyi müşteriyi reddetmek → gelir kaybı.
+3. **Yanlış Negatif Maliyeti**: Riskli müşteriye kredi vermek → direkt zarar.
+4. **Hızlı Karar Gereksinimi**: Özellikle kısa vadeli kredilerde anlık skor çok önemli.
 
-#### 1. **Keşifsel Veri Analizi (EDA)**
-- Risk faktörlerini keşfetmek
-- Müşteri segmentlerini anlamak
-- Veri kalitesi problemlerini tespit etmek
+---
 
-#### 2. **Dengesiz Veri Problemi Çözümü**
-- **SMOTE**: Azınlık sınıfı (default=1) için sentetik örnekler oluştur
-- **Undersampling**: Çoğunluk sınıfını (default=0) azalt  
-- **Class Weights**: Model eğitiminde sınıf ağırlıklarını ayarla
+## 🔍 Analiz Hedefleri
 
-#### 3. **Model Karşılaştırması**
-- **Logistic Regression**: Basit, yorumlanabilir, hızlı
-- **XGBoost**: Güçlü, ensemble metodu, yüksek performans
+1. **EDA (Keşifsel Veri Analizi)**
+
+   * Yaş, eğitim, cinsiyet gibi faktörlerin riskle ilişkisini görmek.
+   * Tarih ve vade uzunluğunun ödeme davranışına etkisini incelemek.
+
+2. **Dengesiz Veri Çözümü**
+
+   * **SMOTE**: Azınlık sınıfı (default) için sentetik örnek üretmek.
+   * **Undersampling**: Çoğunluk sınıfını azaltmak.
+   * **Class Weights**: Algoritmalara sınıf ağırlığı tanımlamak.
+
+3. **Modelleme**
+
+   * **Logistic Regression**: Basit ve yorumlanabilir.
+   * **XGBoost**: Güçlü ensemble metodu, yüksek performanslı.
+
+---
 
 ## 🏆 Başarı Kriterleri
 
-### 📊 Model Metrikleri
-- **AUC Score**: Ana performans metriği (0.80+ hedef)
-- **Precision**: Riskli dediğimiz müşterilerin ne kadarı gerçekten riskli?
-- **Recall**: Gerçek riskli müşterilerin ne kadarını yakalıyoruz?
+### 📊 Teknik Metrikler
 
-### 💼 İş Metrikleri  
-- **False Positive Rate**: İyi müşteri kaybı ≤ %15
-- **False Negative Rate**: Kötü kredi kabulü ≤ %20
-- **Model Yorumlanabilirliği**: Risk faktörleri açık olmalı
+* **ROC AUC**: Ayırma gücü (0.75+ hedef)
+* **Precision / Recall**: Riskli müşterileri doğru yakalama başarısı
+* **F1-Score**: Denge metriği
+
+### 💼 İş Metrikleri
+
+* **False Positive Rate**: İyi müşteri kaybı düşük olmalı
+* **False Negative Rate**: Riskli müşteri kabul oranı çok düşük olmalı
+* **Model Yorumlanabilirliği**: Kararların neden verildiği açıklanabilmeli
+
+---
+
+## 🎯 Proje Değeri
+
+### 📚 Eğitim Açısından
+
+* Dengesiz veri setlerinde strateji geliştirmeyi öğretir
+* Farklı modelleme yaklaşımlarını karşılaştırmayı sağlar
+* End-to-end ML pipeline kurma deneyimi kazandırır
+* Streamlit ile canlı dashboard ve scoring uygulaması geliştirmeyi gösterir
+
+### 🏢 İş Açısından
+
+* Kredi değerlendirme süresini dakikalar → saniyelere indirir
+* Kredi portföyündeki riskleri azaltır
+* Müşteri deneyimini iyileştirir (hızlı onay/red)
+
+---
+
+## ⚠️ Etik Hususlar
+
+### 🛡️ Bias Önleme
+
+* Eğitim veya cinsiyet gibi değişkenlerin karar mekanizmasındaki etkisi şeffaf takip edilir.
+* Düzenli fairness testleri yapılır.
+
+### 🔒 Veri Güvenliği
+
+* Tarih ve kimlik bilgileri anonimleştirilir.
+* GDPR/KVKK uyumlu süreçler uygulanır.
+
+---
 
 ## 🎯 Proje Değeri
 
@@ -90,23 +133,7 @@ Bu proje öğrencilere şunları öğretir:
 - Streamlit ile dashboard geliştirme
 - Cloud deployment
 
-### 🏢 **İş Açısından**
-- Risk değerlendirme süresini 2 hafta → 2 dakikaya düşürür
-- Manuel hataları %80 azaltır
-- Kredi portföy kalitesini %15 iyileştirir
-- Müşteri deneyimini dramatik olarak geliştirir
 
-## ⚠️ **Etik Hususlar**
-
-### 🛡️ **Bias Prevention**
-- Yaş, cinsiyet gibi korumalı özellikler kullanılmıyor
-- Model adaletliliği düzenli test ediliyor
-- Şeffaf karar verme süreci
-
-### 🔒 **Veri Güvenliği**
-- Kişisel veriler anonimleştirilmiş
-- GDPR/KVKK uyumlu süreçler
-- Güvenli model deployment
 
 ## 🚀 **Sonuç**
 
@@ -121,4 +148,6 @@ konularında da deneyim kazandırıyor.
 
 ---
 
-*Bu hikaye, öğrencilerin veri bilimi projelerini sadece teknik egzersiz olarak değil, gerçek iş problemleri olarak görmelerini sağlamak için yazılmıştır.*
+
+
+✨ *Bu hikaye, projenin sadece “bir ML alıştırması” değil, gerçek hayattaki kredi risk yönetiminin bir prototipi olduğunu vurgulamak için hazırlanmıştır.*
