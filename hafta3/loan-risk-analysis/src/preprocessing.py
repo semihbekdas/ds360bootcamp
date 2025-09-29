@@ -1,129 +1,93 @@
+"""
+Preprocessing + Split
+- Hedef kodlama: PAIDOFF=1, diğerleri=0
+- Leakage drop: paid_off_time, past_due_days, Loan_ID
+- Tarih → timestamp
+- OneHot + Impute
+- Split (stratify)
+- Opsiyon: SMOTE / UnderSampling (train aşamasında çağrılacak)
+"""
+
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.utils.class_weight import compute_class_weight
-from imblearn.over_sampling import SMOTE
-from imblearn.under_sampling import RandomUnderSampler
-from imblearn.pipeline import Pipeline as ImbPipeline
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
 
-class DataPreprocessor:
-    def __init__(self):
-        self.scaler = StandardScaler()
-        self.label_encoders = {}
-        self.feature_names = None
-        
-    def preprocess_data(self, df):
-        """
-        Veriyi preprocessing işleminden geçirir
-        """
-        df_processed = df.copy()
-        
-        # Target column'u bul
-        target_candidates = ['default', 'loan_status', 'target', 'class', 'y']
-        target_col = None
-        for col in df_processed.columns:
-            if any(candidate in col.lower() for candidate in target_candidates):
-                target_col = col
-                break
-        
-        if target_col is None:
-            # Eğer target bulunamazsa binary olan ilk kolonu al
-            for col in df_processed.columns:
-                if df_processed[col].nunique() == 2:
-                    target_col = col
-                    break
-        
-        if target_col is None:
-            raise ValueError("Target column bulunamadı!")
-        
-        print(f"Target column: {target_col}")
-        
-        # Features ve target'ı ayır
-        X = df_processed.drop(columns=[target_col])
-        y = df_processed[target_col]
-        
-        # Kategorik değişkenleri encode et
-        categorical_cols = X.select_dtypes(include=['object']).columns
-        for col in categorical_cols:
-            le = LabelEncoder()
-            X[col] = le.fit_transform(X[col].astype(str))
-            self.label_encoders[col] = le
-        
-        # Feature isimlerini sakla
-        self.feature_names = X.columns.tolist()
-        
-        # Target'ı binary yap
-        if y.dtype == 'object':
-            le_target = LabelEncoder()
-            y = le_target.fit_transform(y)
-            self.target_encoder = le_target
-        
-        # Scaling
-        X_scaled = self.scaler.fit_transform(X)
-        X_scaled = pd.DataFrame(X_scaled, columns=self.feature_names)
-        
-        return X_scaled, y
-    
-    def get_balanced_datasets(self, X, y, test_size=0.2, random_state=42):
-        """
-        SMOTE, undersampling ve class weights için veri setleri hazırlar
-        """
-        # Train-test split
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=random_state, stratify=y
-        )
-        
-        # Class weights hesapla
-        class_weights = compute_class_weight(
-            'balanced', 
-            classes=np.unique(y_train), 
-            y=y_train
-        )
-        class_weight_dict = {i: weight for i, weight in enumerate(class_weights)}
-        
-        # SMOTE uygula
-        smote = SMOTE(random_state=random_state)
-        X_train_smote, y_train_smote = smote.fit_resample(X_train, y_train)
-        
-        # Random undersampling uygula
-        undersampler = RandomUnderSampler(random_state=random_state)
-        X_train_under, y_train_under = undersampler.fit_resample(X_train, y_train)
-        
-        datasets = {
-            'original': (X_train, X_test, y_train, y_test),
-            'smote': (X_train_smote, X_test, y_train_smote, y_test),
-            'undersampled': (X_train_under, X_test, y_train_under, y_test),
-            'class_weights': class_weight_dict
-        }
-        
-        # Dataset istatistikleri yazdır
-        print("Dataset İstatistikleri:")
-        print(f"Original - Train: {len(y_train)}, Positive: {sum(y_train)}, Negative: {len(y_train)-sum(y_train)}")
-        print(f"SMOTE - Train: {len(y_train_smote)}, Positive: {sum(y_train_smote)}, Negative: {len(y_train_smote)-sum(y_train_smote)}")
-        print(f"Undersampled - Train: {len(y_train_under)}, Positive: {sum(y_train_under)}, Negative: {len(y_train_under)-sum(y_train_under)}")
-        print(f"Test: {len(y_test)}, Positive: {sum(y_test)}, Negative: {len(y_test)-sum(y_test)}")
-        
-        return datasets
+DATA_PATH = "/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta3/loan-risk-analysis/data/loan_data.csv"
 
-def load_and_preprocess():
-    """
-    Veriyi yükleyip preprocessing yapar
-    """
-    from data_loader import load_data
-    
-    # Veriyi yükle
+TARGET_COL = "loan_status"
+
+LEAKAGE_COLS = ["paid_off_time", "past_due_days"]
+DROP_COLS = ["Loan_ID", TARGET_COL] + LEAKAGE_COLS
+
+def _feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
+    # Tarihler
+    for c in ["effective_date","due_date"]:
+        if c in df.columns:
+            df[c] = pd.to_datetime(df[c], errors="coerce")
+
+    # Türev: planlanan vade (gün)
+    if {"effective_date","due_date"}.issubset(df.columns):
+        df["planned_term_days"] = (df["due_date"] - df["effective_date"]).dt.days
+
+    # Tarihleri timestamp'a çevir (saniye)
+    for c in ["effective_date","due_date"]:
+        if c in df.columns:
+            df[c] = pd.to_datetime(df[c], errors="coerce").astype("int64") // 10**9
+
+    # Ek örnek: principal/terms (bölme hatasına karşı)
+    if "Principal" in df.columns and "terms" in df.columns:
+        terms = df["terms"].replace({0: np.nan})
+        df["principal_per_term"] = df["Principal"] / terms
+
+    return df
+
+def load_data() -> pd.DataFrame:
+    p = Path(DATA_PATH)
+    if not p.exists():
+        raise FileNotFoundError(f"CSV bulunamadı: {p}")
+    return pd.read_csv(p)
+
+def make_xy(df: pd.DataFrame):
+    y = df[TARGET_COL].replace({
+        "PAIDOFF": 1,
+        "COLLECTION": 0,
+        "COLLECTION_PAIDOFF": 0
+    }).astype(int)
+
+    X = df.drop(columns=DROP_COLS, errors="ignore").copy()
+    X = _feature_engineering(X)
+
+    # Kolon grupları
+    num_cols = X.select_dtypes(include=[np.number]).columns.tolist()
+    cat_cols = [c for c in X.columns if c not in num_cols]
+
+    numeric = Pipeline([("imputer", SimpleImputer(strategy="median"))])
+    categorical = Pipeline([
+        ("imputer", SimpleImputer(strategy="most_frequent")),
+        ("onehot", OneHotEncoder(handle_unknown="ignore"))
+    ])
+
+    preprocessor = ColumnTransformer([
+        ("num", numeric, num_cols),
+        ("cat", categorical, cat_cols)
+    ])
+
+    return X, y, preprocessor
+
+def get_splits(test_size=0.2, random_state=42):
     df = load_data()
-    
-    # Preprocessing
-    preprocessor = DataPreprocessor()
-    X, y = preprocessor.preprocess_data(df)
-    
-    # Balanced datasets oluştur
-    datasets = preprocessor.get_balanced_datasets(X, y)
-    
-    return datasets, preprocessor
+    X, y, pre = make_xy(df)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=random_state, stratify=y
+    )
+    return X_train, X_test, y_train, y_test, pre
 
 if __name__ == "__main__":
-    datasets, preprocessor = load_and_preprocess()
-    print("Preprocessing tamamlandı!")
+    X_train, X_test, y_train, y_test, pre = get_splits()
+    print("✅ Split hazır:", X_train.shape, X_test.shape)
+    print("y dağılımı (train):", y_train.value_counts(normalize=True).round(3).to_dict())

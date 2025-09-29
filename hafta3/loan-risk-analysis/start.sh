@@ -15,6 +15,7 @@ source venv/bin/activate
 
 # Dependencies kurulumu
 echo "📚 Dependencies kuruluyor..."
+pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 
 # Models klasörü kontrolü
@@ -35,8 +36,9 @@ echo "🎯 Kullanım adımları:"
 echo "1. EDA için:"
 echo "   - Script ile: cd src && python eda.py"
 echo "   - Notebook ile: jupyter notebook notebooks/01_eda.ipynb"
-echo "2. Modelleri eğitmek için: cd src && python models.py"
-echo "3. Streamlit uygulamasını çalıştırmak için: streamlit run streamlit_app/app.py"
+echo "2. Preprocessing için: cd src && python preprocessing.py"
+echo "3. Modelleri eğitmek için: cd src && python models.py"
+echo "4. Streamlit uygulamasını çalıştırmak için: streamlit run streamlit_app/app.py"
 echo ""
 echo "🌐 Render/Railway deployment için:"
 echo "   - requirements.txt dosyası hazır"

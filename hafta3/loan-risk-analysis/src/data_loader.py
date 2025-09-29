@@ -14,16 +14,20 @@ def load_data():
     """
     Loan verisini yükler
     """
+    import os
+    
+    # Data klasörünü oluştur
+    os.makedirs('../data', exist_ok=True)
+    
     try:
         # Önce yerel dosyayı kontrol et
-        df = pd.read_csv('data/loan_data.csv')
+        df = pd.read_csv('../data/loan_data.csv')
         print("Yerel veri yüklendi!")
     except:
         print("Kaggle'dan veri indiriliyor...")
         dataset_path = download_loan_data()
         
         # Dataset dosyalarını kontrol et
-        import os
         files = os.listdir(dataset_path)
         print("İndirilen dosyalar:", files)
         
@@ -32,7 +36,7 @@ def load_data():
         if csv_files:
             df = pd.read_csv(os.path.join(dataset_path, csv_files[0]))
             # Yerel kopyasını kaydet
-            df.to_csv('data/loan_data.csv', index=False)
+            df.to_csv('../data/loan_data.csv', index=False)
             print("Veri başarıyla yüklendi ve kaydedildi!")
         else:
             raise Exception("CSV dosyası bulunamadı!")
