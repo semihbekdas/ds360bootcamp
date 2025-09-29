@@ -34,10 +34,15 @@ data/*.json
 data/*.xlsx
 !data/sample_data.csv
 
-# Models
+# Models (ignore models/ directory but keep artifacts/)
 models/
 *.pkl
 *.joblib
+
+# Keep artifacts for deployment
+!artifacts/
+!artifacts/*.pkl
+!artifacts/*.json
 
 # Streamlit
 .streamlit/
