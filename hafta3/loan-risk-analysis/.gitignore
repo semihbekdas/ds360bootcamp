@@ -28,11 +28,12 @@ ENV/
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# Data files
+# Data files (ignore large datasets but keep essential ones)
 data/*.csv
 data/*.json
 data/*.xlsx
 !data/sample_data.csv
+!data/loan_data.csv
 
 # Models (ignore models/ directory but keep artifacts/)
 models/
