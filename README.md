@@ -20,7 +20,7 @@ Kapsamlı Data Science ve MLOps eğitimi - 10 haftalık program
   - SMOTE ve undersampling teknikleri
   - Model karşılaştırması (LR vs XGBoost)
   - Streamlit dashboard geliştirme
-  - Render/Railway deployment
+  - 🚀 [Render deployment ready](RENDER_DEPLOYMENT_GUIDE.md)
 
 ### 🔜 Hafta 4
 - *İçerik belirlenecek*
@@ -97,6 +97,7 @@ uvicorn src.api:app --reload
 ## 📖 Ek Kaynaklar
 
 - [KAPSAMLI_REHBER.md](hafta2/KAPSAMLI_REHBER.md) - Detaylı teknik rehber
+- 🚀 [RENDER_DEPLOYMENT_GUIDE.md](RENDER_DEPLOYMENT_GUIDE.md) - **Multi-project Render deployment**
 - Her proje klasöründeki README.md dosyalarını okuyun
 - Practical örnekler ve hands-on projeler
 

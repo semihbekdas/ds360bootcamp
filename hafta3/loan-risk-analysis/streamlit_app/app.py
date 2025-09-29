@@ -2,23 +2,33 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib, json
+import os
 from datetime import date
 
-st.set_page_config(page_title="Loan Risk (Live)", layout="centered")
+st.set_page_config(page_title="Loan Risk Analysis", layout="centered", page_icon="💳")
 st.title("💳 Loan Risk Panel — Canlı Skor")
 
 # ========= AYAR =========
-MODEL_PATH  = "artifacts/model_xgb_cw.pkl"       # Pipeline(pre+clf) KULLAN
-SCHEMA_PATH = "artifacts/feature_schema.json"    # train.py’de kaydetmiştik
+MODEL_PATH  = "artifacts/model_xgb_smote.pkl"        # sadece model
+SCHEMA_PATH = "artifacts/feature_schema_smote.json"  # SMOTE şeması
+PRE_PATH    = "artifacts/preprocessor_smote.pkl"     # ön-işlemci
+
 # Eğer pre ayrıysa ayrıca PRE_PATH yükle ve predict öncesi pre.transform() yap (aşağıda not var)
 
 @st.cache_resource
 def load_artifacts():
-    model = joblib.load(MODEL_PATH)
-    schema_cols = json.load(open(SCHEMA_PATH))["columns"]
-    return model, schema_cols
+    try:
+        model = joblib.load(MODEL_PATH)
+        pre   = joblib.load(PRE_PATH)
+        with open(SCHEMA_PATH, 'r') as f:
+            schema_cols = json.load(f)["columns"]
+        return model, pre, schema_cols
+    except Exception as e:
+        st.error(f"Model dosyaları yüklenemedi: {e}")
+        st.stop()
 
-model, schema_cols = load_artifacts()
+model, pre, schema_cols = load_artifacts()
+
 
 def to_ts(d):
     return pd.to_datetime(d).value // 10**9
@@ -70,7 +80,8 @@ X = build_features_single(
 )
 
 # PIPELINE model ise: direkt predict_proba(X)
-proba = float(model.predict_proba(X)[:, 1][0])
+Xt = pre.transform(X)                                # <-- önce transform
+proba = float(model.predict_proba(Xt)[:, 1][0])      # sonra predict
 st.metric("PAIDOFF Olasılığı", f"{proba:.2%}")
 st.caption("Not: Olasılık düşükse risk yüksektir.")
 
@@ -97,7 +108,9 @@ if up is not None:
         pass
 
     Xbulk = data.reindex(columns=schema_cols, fill_value=np.nan)
-    probs = model.predict_proba(Xbulk)[:, 1]
+    Xt_bulk = pre.transform(Xbulk)                       # <-- önce transform
+    probs = model.predict_proba(Xt_bulk)[:, 1]           # sonra predict
+
     out = data.copy()
     out["paid_prob"] = probs
     st.dataframe(out.head())
