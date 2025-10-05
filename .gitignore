@@ -2,3 +2,12 @@ ds360/
 .DS_Store
 *.pyc
 __pycache__/
+venv/
+env/
+fresh_venv/
+.env
+
+# Large dataset files
+*.csv
+data/raw/
+data/processed/
