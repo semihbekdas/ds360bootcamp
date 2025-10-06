@@ -23,7 +23,7 @@ import warnings
 
 # Local imports
 from preprocessing import FeaturePreprocessor, ImbalanceHandler
-from evaluation import FraudEvaluator
+from .evaluation import FraudEvaluator
 try:
     from explainability_clean import ModelExplainer
 except ImportError:

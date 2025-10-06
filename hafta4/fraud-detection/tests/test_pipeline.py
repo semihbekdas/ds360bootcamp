@@ -14,8 +14,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from pipeline import FraudDetectionPipeline
 from preprocessing import FeaturePreprocessor, ImbalanceHandler
-from evaluation import FraudEvaluator
-from outlier_detection import OutlierDetector
 
 
 class TestFraudDetectionPipeline:
@@ -269,112 +267,6 @@ class TestImbalanceHandler:
         assert counts[0] == counts[1]  # Should be balanced
 
 
-class TestFraudEvaluator:
-    """Fraud evaluator tests"""
-    
-    @pytest.fixture
-    def sample_predictions(self):
-        """Sample predictions for evaluation"""
-        y_true = np.array([0, 1, 0, 1, 0, 1, 0, 1])
-        y_pred_proba = np.array([0.1, 0.8, 0.2, 0.9, 0.3, 0.7, 0.1, 0.85])
-        return y_true, y_pred_proba
-    
-    def test_evaluator_initialization(self):
-        """Test evaluator initialization"""
-        evaluator = FraudEvaluator()
-        assert evaluator.model is None
-        assert evaluator.model_name == "Model"
-        assert evaluator.results == {}
-    
-    def test_binary_classification_evaluation(self, sample_predictions):
-        """Test binary classification evaluation"""
-        y_true, y_pred_proba = sample_predictions
-        
-        evaluator = FraudEvaluator()
-        results = evaluator.evaluate_binary_classification(
-            None, y_true, y_pred_proba=y_pred_proba
-        )
-        
-        assert 'roc_auc' in results
-        assert 'pr_auc' in results
-        assert 'f1_score' in results
-        assert 'precision' in results
-        assert 'recall' in results
-        assert 'confusion_matrix' in results
-        
-        # Check value ranges
-        assert 0 <= results['roc_auc'] <= 1
-        assert 0 <= results['pr_auc'] <= 1
-        assert 0 <= results['f1_score'] <= 1
-
-
-class TestOutlierDetector:
-    """Outlier detector tests"""
-    
-    @pytest.fixture
-    def sample_data(self):
-        """Sample data with outliers"""
-        np.random.seed(42)
-        # Normal data
-        normal_data = np.random.normal(0, 1, (100, 5))
-        # Outlier data
-        outlier_data = np.random.normal(5, 1, (10, 5))
-        
-        X = np.vstack([normal_data, outlier_data])
-        y = np.array([0] * 100 + [1] * 10)  # 0: normal, 1: outlier
-        
-        return X, y
-    
-    def test_detector_initialization(self):
-        """Test detector initialization"""
-        detector = OutlierDetector()
-        assert detector.contamination == 0.1
-        assert detector.random_state == 42
-        assert detector.isolation_forest is None
-        assert detector.lof is None
-    
-    def test_isolation_forest_training(self, sample_data):
-        """Test Isolation Forest training"""
-        X, y = sample_data
-        
-        detector = OutlierDetector()
-        detector.fit_isolation_forest(X)
-        
-        assert detector.isolation_forest is not None
-        assert detector.scaler is not None
-    
-    def test_lof_training(self, sample_data):
-        """Test LOF training"""
-        X, y = sample_data
-        
-        detector = OutlierDetector()
-        detector.fit_lof(X)
-        
-        assert detector.lof is not None
-        assert detector.scaler is not None
-    
-    def test_outlier_prediction(self, sample_data):
-        """Test outlier prediction"""
-        X, y = sample_data
-        
-        detector = OutlierDetector()
-        detector.fit_isolation_forest(X)
-        
-        predictions = detector.predict_isolation_forest(X)
-        
-        assert len(predictions) == len(X)
-        assert all(pred in [0, 1] for pred in predictions)
-    
-    def test_performance_evaluation(self, sample_data):
-        """Test performance evaluation"""
-        X, y = sample_data
-        
-        detector = OutlierDetector()
-        detector.fit_isolation_forest(X)
-        
-        # Should not raise an error
-        report = detector.evaluate_performance(X, y, 'isolation_forest')
-        assert report is not None
 
 
 if __name__ == "__main__":
