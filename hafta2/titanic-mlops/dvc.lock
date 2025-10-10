@@ -37,8 +37,8 @@ stages:
       size: 74202
     - path: src/train_model.py
       hash: md5
-      md5: 4f6e883b5aff49b15df4552a1be1bb0f
-      size: 2724
+      md5: 7a9eab372a6871f45f9c09bbe4c8b340
+      size: 2762
     outs:
     - path: models/features.json
       hash: md5
@@ -46,13 +46,13 @@ stages:
       size: 148
     - path: models/logistic_regression_model.pkl
       hash: md5
-      md5: 36f9b7f3e70fd1072e9a46c31cf7bfc8
-      size: 1295
+      md5: 15d8dbc6422469ace0979b201a5c51df
+      size: 1391
     - path: models/metrics.json
       hash: md5
       md5: 30829c164f90ad1ee3b0cb8291670c92
       size: 146
     - path: models/random_forest_model.pkl
       hash: md5
-      md5: c868c471ace756f99d31f1ba6b66ff0c
-      size: 1678425
+      md5: 9e9b958b94a01f2b8c0878ddbdcc3df1
+      size: 1678505

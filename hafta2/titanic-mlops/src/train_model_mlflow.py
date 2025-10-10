@@ -13,7 +13,7 @@ def train_with_mlflow():
     """MLflow ile model eğitimi ve takip"""
     
     # İşlenmiş veriyi yükle
-    df = pd.read_csv('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta2/titanic-mlops/data/processed/titanic_processed.csv')
+    df = pd.read_csv('/Users/semihbekdas/Documents/MachineLearning/ds360/ds360bootcamp/hafta2/titanic-mlops/data/processed/titanic_processed.csv')
     
     # X ve y'yi ayır - seaborn dataset kolonlarına göre güncellendi
     feature_cols = ['pclass', 'sex_encoded', 'age', 'sibsp', 'parch', 

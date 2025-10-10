@@ -2,6 +2,11 @@
 
 Bu proje MLflow'un temel kullanımını öğretir.
 
+
+mlflow: yaptığımız değişiklikleri versiyonlayabiliriz parametreleri modelleri kaydedebiliriz denediğimiz değişiklikleri buradan takip edebiliriz
+eğittiğmiz modelleri değişiklikleri ui'da görebiliriz
+
+
 ## Adımlar
 
 1. **Modeli çalıştır:**

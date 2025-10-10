@@ -11,3 +11,7 @@ fresh_venv/
 *.csv
 data/raw/
 data/processed/
+
+.ipynb_checkpoints/
+.vscode/
+.idea/

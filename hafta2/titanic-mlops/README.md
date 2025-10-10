@@ -74,6 +74,10 @@ python src/train_model_mlflow.py
 
 # MLflow UI'yi başlat
 mlflow ui
+
+# port değişikliği için
+mlflow ui --port 5001
+
 ```
 
 MLflow arayüzü: http://localhost:5000
