@@ -36,8 +36,17 @@ Kapsamlı Data Science ve MLOps eğitimi - 10 haftalık program
   - Production-ready MLOps pipeline
   - Interactive demo ve comprehensive evaluation
 
-### 🔜 Hafta 5
-- *İçerik belirlenecek*
+### ✅ Hafta 5 - Time Series Forecasting: M5 Competition 🏪
+**Konular:** ARIMA, Prophet, LightGBM, Time Series CV, Prefect Automation, Docker Deployment
+- 🏪 [hafta5](hafta5/) - **M5 Forecasting Modular Pipeline**
+  - 📖 **M5 Dataset Story**: Walmart'ın 5 yıllık satış verisi (2011-2016)
+  - 🏗️ **Modular Architecture**: 7 specialized modules (P1-P7)
+  - 📊 **Model Comparison**: ARIMA (~46% sMAPE) vs Prophet (~28% sMAPE) vs LightGBM (~33% sMAPE)
+  - ⚙️ **Feature Engineering**: Lag, rolling, seasonal features
+  - ✅ **Time Series CV**: Rolling-origin cross-validation (proper temporal splitting)
+  - 🔄 **Prefect Automation**: Daily forecasting pipeline (09:00 Europe/Istanbul)
+  - 🐳 **Docker Ready**: Production containerization with volume mounting
+  - 📚 **Comprehensive Docs**: 1,500+ line documentation with dataset story
 
 ### 🔜 Hafta 6
 - *İçerik belirlenecek*
