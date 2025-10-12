@@ -4,7 +4,11 @@
 
 Bu proje **Kaggle M5 Competition** dataset'ini kullanır. Dataset dosyaları (~430MB) GitHub'da depolanmaz.
 
-### 🔗 **Download Links:**
+### 🎓 **Ders Katılımcıları İçin:**
+- **Ders sırasında instructor'dan** dataset dosyalarını alabilirsiniz
+- **Ders notları** ile birlikte paylaşılmıştır
+
+### 🔗 **Alternatif Download Links:**
 - **Main Source**: [Kaggle M5 Competition](https://www.kaggle.com/c/m5-forecasting-accuracy/data)
 - **Direct Files**: https://www.kaggle.com/competitions/m5-forecasting-accuracy/data
 
