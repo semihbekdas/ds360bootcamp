@@ -73,7 +73,7 @@ class ARIMASingleItemForecaster:
         
         try:
             # Train verisi yükle
-            train_df = pd.read_csv('./artifacts/datasets/train.csv', parse_dates=['date'], index_col='date')
+            train_df = pd.read_csv('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/datasets/train.csv', parse_dates=['date'], index_col='date')
             
             # Ürün bazında toplam satış hesapla
             item_totals = train_df.groupby('item_id')['sales'].sum().sort_values(ascending=False)
@@ -102,8 +102,8 @@ class ARIMASingleItemForecaster:
         
         try:
             # Train ve valid verilerini yükle
-            train_df = pd.read_csv('./artifacts/datasets/train.csv', parse_dates=['date'], index_col='date')
-            valid_df = pd.read_csv('./artifacts/datasets/valid.csv', parse_dates=['date'], index_col='date')
+            train_df = pd.read_csv('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/datasets/train.csv', parse_dates=['date'], index_col='date')
+            valid_df = pd.read_csv('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/datasets/valid.csv', parse_dates=['date'], index_col='date')
             
             # Seçilen ürün için filtrele
             item_train = train_df[train_df['item_id'] == self.item_id]['sales'].copy()

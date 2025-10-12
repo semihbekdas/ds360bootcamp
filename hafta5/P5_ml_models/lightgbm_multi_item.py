@@ -51,7 +51,7 @@ class LightGBMMultiItemForecaster:
     - Iteratif 28 günlük tahmin
     """
     
-    def __init__(self, artifacts_path='./artifacts'):
+    def __init__(self, artifacts_path='/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts'):
         self.artifacts_path = artifacts_path
         self.train_df = None
         self.valid_df = None

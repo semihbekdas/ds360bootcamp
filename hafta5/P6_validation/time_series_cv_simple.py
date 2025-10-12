@@ -29,7 +29,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 warnings.filterwarnings('ignore')
 
-def load_data(artifacts_path='./artifacts'):
+def load_data(artifacts_path='/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts'):
     """Feature engineered verileri yükle"""
     print("📁 Veri yükleniyor...")
     

@@ -28,21 +28,21 @@ def create_features():
     print("=" * 60)
     
     # Çıktı klasörlerini kontrol et
-    if not os.path.exists('./artifacts/datasets'):
+    if not os.path.exists('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/datasets'):
         print("❌ ./artifacts/datasets/ klasörü bulunamadı!")
         print("💡 Önce create_m5_subset.py çalıştırın")
-        return
+        return None, None, None, None, None, None
     
     # 1. Veri yükleme
     print("\n📁 1. Train ve Validation verileri yükleniyor...")
     
     try:
         # Train verisi
-        train_df = pd.read_csv('./artifacts/datasets/train.csv', parse_dates=['date'], index_col='date')
+        train_df = pd.read_csv('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/datasets/train.csv', parse_dates=['date'], index_col='date')
         print(f"   ✓ Train verisi: {train_df.shape}")
         
         # Validation verisi
-        valid_df = pd.read_csv('./artifacts/datasets/valid.csv', parse_dates=['date'], index_col='date')
+        valid_df = pd.read_csv('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/datasets/valid.csv', parse_dates=['date'], index_col='date')
         print(f"   ✓ Valid verisi: {valid_df.shape}")
         
         # Veri tiplerini kontrol et
@@ -52,7 +52,7 @@ def create_features():
     except FileNotFoundError as e:
         print(f"❌ Dosya bulunamadı: {e}")
         print("💡 Önce create_m5_subset.py çalıştırın")
-        return
+        return None, None, None, None, None, None
     
     # Veriyi birleştir (feature engineering için tam zaman serisi gerekli)
     print(f"\n🔗 2. Train ve Valid birleştiriliyor (FE için tam seri gerekli)...")
@@ -216,8 +216,8 @@ def create_features():
     print(f"\n💾 7. Feature engineered veriler kaydediliyor...")
     
     # Tam feature dataset'leri kaydet (meta bilgilerle)
-    fe_train_path = './artifacts/datasets/fe_train.parquet'
-    fe_valid_path = './artifacts/datasets/fe_valid.parquet'
+    fe_train_path = '/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/datasets/fe_train.parquet'
+    fe_valid_path = '/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/datasets/fe_valid.parquet'
     
     fe_train.to_parquet(fe_train_path)
     fe_valid.to_parquet(fe_valid_path)
@@ -226,10 +226,10 @@ def create_features():
     print(f"   ✓ FE Valid: {fe_valid_path}")
     
     # X, y matrislerini de kaydet (model için direkt kullanım)
-    X_train.to_parquet('./artifacts/datasets/X_train.parquet')
-    y_train.to_frame('sales').to_parquet('./artifacts/datasets/y_train.parquet')
-    X_valid.to_parquet('./artifacts/datasets/X_valid.parquet')
-    y_valid.to_frame('sales').to_parquet('./artifacts/datasets/y_valid.parquet')
+    X_train.to_parquet('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/datasets/X_train.parquet')
+    y_train.to_frame('sales').to_parquet('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/datasets/y_train.parquet')
+    X_valid.to_parquet('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/datasets/X_valid.parquet')
+    y_valid.to_frame('sales').to_parquet('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/datasets/y_valid.parquet')
     
     print(f"   ✓ X_train, y_train, X_valid, y_valid kaydedildi")
     
@@ -283,7 +283,7 @@ def create_features():
     plt.tight_layout()
     
     # Kaydet
-    hist_path = './artifacts/figures/feature_distributions.png'
+    hist_path = '/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/figures/feature_distributions.png'
     plt.savefig(hist_path, dpi=300, bbox_inches='tight')
     print(f"   ✓ Feature histogramları: {hist_path}")
     plt.close()
@@ -309,7 +309,7 @@ def create_features():
     plt.tight_layout()
     
     # Kaydet
-    corr_path = './artifacts/figures/feature_correlations.png'
+    corr_path = '/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts/figures/feature_correlations.png'
     plt.savefig(corr_path, dpi=300, bbox_inches='tight')
     print(f"   ✓ Korelasyon matrisi: {corr_path}")
     plt.close()
@@ -336,14 +336,27 @@ def create_features():
     
     return fe_train, fe_valid, X_train, y_train, X_valid, y_valid
 
+def main():
+    """run_modular.py için wrapper fonksiyonu"""
+    result = create_features()
+    if result is None or (isinstance(result, tuple) and result[0] is None):
+        print(f"❌ Feature engineering başarısız. P1'i önce çalıştırın.")
+        return False
+    else:
+        print(f"✅ Feature Engineering tamamlandı!")
+        return True
+
 if __name__ == "__main__":
     try:
         print("🚀 M5 Feature Engineering başlatılıyor...")
         
-        fe_train, fe_valid, X_train, y_train, X_valid, y_valid = create_features()
-        
-        print(f"\n🎉 İşlem başarıyla tamamlandı!")
-        print(f"📊 Artık makine öğrenmesi modellerini eğitebilirsiniz.")
+        result = create_features()
+        if result is None or (isinstance(result, tuple) and result[0] is None):
+            print(f"\n❌ Feature engineering başarısız.")
+        else:
+            fe_train, fe_valid, X_train, y_train, X_valid, y_valid = result
+            print(f"\n🎉 İşlem başarıyla tamamlandı!")
+            print(f"📊 Artık makine öğrenmesi modellerini eğitebilirsiniz.")
         
     except Exception as e:
         print(f"\n❌ Hata: {e}")

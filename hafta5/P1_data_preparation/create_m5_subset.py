@@ -33,18 +33,18 @@ def create_m5_subset():
     try:
         # Sales verisi
         print("   • sales_train_validation.csv okunuyor...")
-        sales_df = pd.read_csv('./data/sales_train_validation.csv')
+        sales_df = pd.read_csv('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/data/sales_train_validation.csv')
         print(f"   ✓ Satış verisi: {sales_df.shape}")
         
         # Calendar verisi
         print("   • calendar.csv okunuyor...")
-        calendar_df = pd.read_csv('./data/calendar.csv')
+        calendar_df = pd.read_csv('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/data/calendar.csv')
         calendar_df['date'] = pd.to_datetime(calendar_df['date'])
         print(f"   ✓ Takvim verisi: {calendar_df.shape}")
         
         # Prices verisi (opsiyonel, kullanmayacağız ama kontrol edelim)
         try:
-            prices_df = pd.read_csv('./data/sell_prices.csv')
+            prices_df = pd.read_csv('/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/data/sell_prices.csv')
             print(f"   ✓ Fiyat verisi: {prices_df.shape}")
         except FileNotFoundError:
             print("   ⚠️  Fiyat verisi bulunamadı (isteğe bağlı)")
@@ -52,7 +52,7 @@ def create_m5_subset():
     except FileNotFoundError as e:
         print(f"   ❌ Veri dosyası bulunamadı: {e}")
         print("   💡 Önce create_sample_data.py çalıştırın veya gerçek M5 verisini indirin")
-        return
+        return None, None, None
     
     # 2. CA_1 mağazası ve FOODS kategorisini filtrele
     print("\n🏪 2. CA_1 mağazası ve FOODS kategorisi filtreleniyor...")
@@ -289,10 +289,24 @@ def create_m5_subset():
     
     return train_df, valid_df, daily_total
 
+def main():
+    """run_modular.py için wrapper fonksiyonu"""
+    result = create_m5_subset()
+    if result is None or (isinstance(result, tuple) and result[0] is None):
+        print(f"❌ Veri dosyası bulunamadı. Sample data kullanın.")
+        return False
+    else:
+        print(f"✅ M5 CA_1 FOODS subset created successfully!")
+        return True
+
 if __name__ == "__main__":
     try:
-        train_data, valid_data, daily_sales = create_m5_subset()
-        print(f"\n🎉 M5 küçük çalışma seti başarıyla oluşturuldu!")
+        result = create_m5_subset()
+        if result is None or (isinstance(result, tuple) and result[0] is None):
+            print(f"\n❌ Veri dosyası bulunamadı. Script durduruluyor.")
+        else:
+            train_data, valid_data, daily_sales = result
+            print(f"\n🎉 M5 küçük çalışma seti başarıyla oluşturuldu!")
         
     except Exception as e:
         print(f"\n❌ Hata: {e}")

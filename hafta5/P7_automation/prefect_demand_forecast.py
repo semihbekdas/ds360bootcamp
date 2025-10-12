@@ -61,7 +61,7 @@ warnings.filterwarnings('ignore')
 # ================================
 
 @task
-def load_data_task(artifacts_path: str = "./artifacts") -> pd.DataFrame:
+def load_data_task(artifacts_path: str = "/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta5/artifacts") -> pd.DataFrame:
     """
     Veri yükleme görevi (P1'in basitleştirilmiş hali)
     
