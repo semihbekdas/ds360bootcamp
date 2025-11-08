@@ -5,6 +5,7 @@ Fraud detection için veri ön işleme araçları
 
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from sklearn.preprocessing import (
     StandardScaler, RobustScaler, MinMaxScaler,
     LabelEncoder, OneHotEncoder, OrdinalEncoder
@@ -96,17 +97,21 @@ class FeaturePreprocessor:
         
         # Numerical missing values
         if self.numerical_features:
-            num_imputer = SimpleImputer(strategy=strategy)
-            df_processed[self.numerical_features] = num_imputer.fit_transform(
-                df_processed[self.numerical_features]
-            )
+            existing_num = [col for col in self.numerical_features if col in df_processed.columns]
+            if existing_num:
+                num_imputer = SimpleImputer(strategy=strategy)
+                df_processed[existing_num] = num_imputer.fit_transform(
+                    df_processed[existing_num]
+                )
         
         # Categorical missing values
         if self.categorical_features:
-            cat_imputer = SimpleImputer(strategy=categorical_strategy)
-            df_processed[self.categorical_features] = cat_imputer.fit_transform(
-                df_processed[self.categorical_features]
-            )
+            existing_cat = [col for col in self.categorical_features if col in df_processed.columns]
+            if existing_cat:
+                cat_imputer = SimpleImputer(strategy=categorical_strategy)
+                df_processed[existing_cat] = cat_imputer.fit_transform(
+                    df_processed[existing_cat]
+                )
         
         logger.info("Eksik değerler dolduruldu")
         return df_processed
@@ -452,9 +457,24 @@ class ImbalanceHandler:
         return X_resampled, y_resampled
 
 
-def demo_preprocessing(data="/Users/yaseminarslan/Desktop/ds360_ikincihafta/hafta4/fraud-detection/data/processed/dataset_with_anomaly_scores_raw.csv"):
-    # 1) Veriyi oku
-    df = pd.read_csv(data)
+def demo_preprocessing(data=None):
+    """Run preprocessing demo on provided dataset or synthetic sample."""
+    if data is None:
+        candidate = Path("data/processed/dataset_with_anomaly_scores_raw.csv")
+        data = candidate if candidate.exists() else None
+
+    if data is None:
+        print("ℹ️  Örnek veri bulunamadı, synthetic veri oluşturuluyor.")
+        rng = np.random.default_rng(42)
+        size = 2000
+        df = pd.DataFrame({
+            'Amount': rng.lognormal(mean=2.0, sigma=1.0, size=size),
+            'Time': rng.integers(0, 86400, size=size),
+            'Merchant_Category': rng.choice(['grocery', 'gas', 'online', 'retail'], size=size),
+            'Class': rng.choice([0, 1], size=size, p=[0.95, 0.05])
+        })
+    else:
+        df = pd.read_csv(data)
     assert "Class" in df.columns, "Hedef kolon 'Class' bulunamadı."
     
     print("Original Dataset Info:")

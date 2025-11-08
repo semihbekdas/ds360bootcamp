@@ -69,7 +69,7 @@ hafta4/fraud-detection/
 │   ├── outlier_detection.py       # Isolation Forest & LOF
 │   ├── preprocessing.py           # Feature scaling & encoding
 │   ├── evaluation.py             # ROC-AUC, PR-AUC metrikleri
-│   ├── explainability.py         # SHAP/LIME açıklamaları
+│   ├── explainability_clean.py   # SHAP/LIME açıklamaları
 │   └── pipeline.py               # End-to-end pipeline
 ├── tests/                         # Unit testler
 │   └── test_pipeline.py          
@@ -89,43 +89,61 @@ hafta4/fraud-detection/
 └── README.md                     # Bu dosya
 ```
 
-## 🔧 Kurulum ve Setup
+## ⚡️ Hızlı Başlangıç
 
-### 1. Environment Setup
 ```bash
-# Proje klasörüne git
+# Proje klasörüne geç
 cd hafta4/fraud-detection
 
-# Virtual environment oluştur (önerilen)
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate   # Windows
+# Sanal ortam (önerilir)
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-# Dependencies kur
+# Bağımlılıkları kur
 pip install -r requirements.txt
 ```
 
-### 2. Dataset İndirme
-```python
-# Yöntem 1: Python script ile
-import kagglehub
-path = kagglehub.dataset_download("mlg-ulb/creditcardfraud")
-print("Path to dataset files:", path)
+Pipeline varsayılan olarak synthetic fraud datası üretir. Gerçek dataset kullanmak istersen KaggleHub ile indirme seçeneği mevcut.
 
-# Yöntem 2: Download utility ile
-python download_data.py
+```bash
+# Varsayılan: synthetic data, modeller kaydedilir
+python src/pipeline.py --mode train --save_models
 
-# Yöntem 3: Pipeline ile otomatik
-python src/pipeline.py --use_kagglehub --save_models
+# Kaggle dataset'ini otomatik indirip eğit
+python src/pipeline.py --mode train --use_kagglehub --save_models
+
+# Belirli bir CSV ile çalış
+python src/pipeline.py --mode train --data data/raw/creditcard.csv --save_models
 ```
 
-### 3. Hızlı Test
-```bash
-# Demo çalıştır (synthetic data ile)
-python run_demo.py
+CLI modları:
+- `--mode train` (varsayılan): End-to-end pipeline, değerlendirme ve açıklanabilirlik.
+- `--mode predict`: Kayıtlı modellerle hızlı tahmin çıktısı gösterir.
+- `--mode explain`: Seçilen model için SHAP/LIME özetleri üretir.
 
-# Gerçek data ile training
-python src/pipeline.py --data data/raw/creditcard_fraud.csv --save_models
+`--load_models` bayrağı hazır modelleri `models/` klasöründen yükler. Modeller yoksa pipeline otomatik yeniden eğitir.
+
+## 🔧 Veri Yönetimi
+
+```bash
+# Kaggle datasını helper script ile indir
+python src/1_download_data.py
+
+# Demo (synthetic data ile menü tabanlı)
+python run_demo.py
+```
+
+Pipeline çıktıları:
+- `models/` içinde `*_model.pkl`, `preprocessor.pkl`, `feature_info.pkl`
+- `mlruns/` altında MLflow metadata (varsayılan olarak yerel SQLite backend)
+- `logs/` klasörü altında `fraud_detection.log`
+
+SHAP waterfall grafiği bazı kombinasyonlarda `Explanation` nesnesi beklediği için uyarı verebilir; pipeline akışı bu uyarıyı loglayıp devam eder.
+
+MLflow için özel bir sunucu belirtmediysen config fallback olarak `mlruns/mlflow.db` SQLite dosyasını kullanır. UI görmek için:
+
+```bash
+mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db
 ```
 
 ## 🎮 Demo ve Örnekler
@@ -140,8 +158,6 @@ python run_demo.py
 - Evaluation metrikleri
 - Model açıklanabilirlik
 - Full pipeline
-- Model karşılaştırması
-- Business metrics analizi
 
 ### 2. Outlier Detection
 ```python
@@ -149,11 +165,12 @@ from src.outlier_detection import OutlierDetector
 
 # Isolation Forest
 detector = OutlierDetector(contamination=0.002)  # %0.2 fraud oranı
-detector.fit_isolation_forest(X_train)
-predictions = detector.predict_isolation_forest(X_test)
+detector.fit_isolation_forest(X_train_processed.values)
+labels, scores = detector.predict_isolation_forest(X_test_processed.values)
 
 # Performance evaluation
-detector.evaluate_performance(X_test, y_test, 'isolation_forest')
+metrics = detector.evaluate_performance(y_test_processed, scores)
+print(metrics)
 ```
 
 ### 3. Feature Preprocessing
@@ -165,10 +182,12 @@ preprocessor = FeaturePreprocessor(
     scaling_method='robust',  # Outlier'lara dayanıklı
     encoding_method='onehot'
 )
-X_processed = preprocessor.fit_transform(X_train)
+processed = preprocessor.fit_transform(train_df, target_col='target')
+X_train_processed = processed.drop('target', axis=1)
+y_train_processed = processed['target']
 
 # Imbalance handling
-X_balanced, y_balanced = ImbalanceHandler.apply_smote(X_train, y_train)
+X_balanced, y_balanced = ImbalanceHandler.apply_smote(X_train_processed, y_train_processed)
 ```
 
 ### 4. Model Evaluation
@@ -176,33 +195,45 @@ X_balanced, y_balanced = ImbalanceHandler.apply_smote(X_train, y_train)
 from src.evaluation import FraudEvaluator
 
 evaluator = FraudEvaluator(model, "Random Forest")
-results = evaluator.evaluate_binary_classification(X_test, y_test)
-
-# ROC ve PR curves
-evaluator.plot_roc_curve(X_test, y_test)
-evaluator.plot_precision_recall_curve(X_test, y_test)
-
-# Threshold optimization
-optimal_threshold = evaluator.plot_threshold_analysis(X_test, y_test)
+results = evaluator.evaluate_binary_classification(X_test_processed, y_test_processed)
+fpr, tpr, roc_thresholds = evaluator.roc_curve_points()
+precision, recall, pr_thresholds = evaluator.precision_recall_points()
 ```
 
 ### 5. Model Açıklanabilirlik
 ```python
-from src.explainability import ModelExplainer
+import numpy as np
+from src.explainability_clean import ModelExplainer
 
-explainer = ModelExplainer(model, X_train, feature_names, ['Normal', 'Fraud'])
+explainer = ModelExplainer(
+  model,
+  X_balanced,
+  feature_names=list(X_train_processed.columns),
+  class_names=['Normal', 'Fraud'],
+  y_train=y_balanced,
+)
 
-# SHAP analysis
-explainer.initialize_shap('tree')
-shap_values = explainer.compute_shap_values(X_test)
-explainer.plot_shap_summary(X_test)
+X_sample = X_test_processed.head(100)
+if explainer.initialize_shap('tree'):
+  shap_values, X_sample = explainer.compute_shap_values(X_sample)
+  if shap_values is not None:
+    explainer.plot_shap_summary(X_sample)
+    explainer.plot_shap_waterfall(X_sample, index=0)
 
-# Individual explanations
-explainer.plot_shap_waterfall(X_test, instance_idx=0)
-
-# LIME comparison
-explainer.explain_instance_lime(X_test, instance_idx=0)
+importance = explainer.global_feature_importance(X_sample, y_test_processed[:len(X_sample)])
+fraud_patterns = explainer.analyze_fraud_patterns(np.asarray(X_sample), y_test_processed[:len(X_sample)])
 ```
+
+## ✅ Testler
+
+Pipeline değişikliklerini kontrol etmek için unit testler mevcut. `pytest` varsayılan gereksinim listesinde değildir; manuel kurulumdan sonra testleri çalıştırabilirsin.
+
+```bash
+pip install pytest
+python -m pytest tests/test_simple.py tests/test_pipeline.py
+```
+
+Testler SMOTE ve SHAP gibi bileşenleri kullandığı için ilk çalıştırmada modellerin veya preprocess dosyalarının oluşturulmuş olması gerekir (`python src/pipeline.py --mode train --save_models`).
 
 ## 📊 Beklenen Sonuçlar ve Öğrenim Hedefleri
 

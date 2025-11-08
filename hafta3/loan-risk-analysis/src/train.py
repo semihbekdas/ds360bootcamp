@@ -34,6 +34,7 @@ def ensure_dir():
 #Pozitif/negatif örnek sayısını sayar.
 #pos_w = neg/pos hesaplar. Bu değer, XGBoost’ta scale_pos_weight olarak kullanılır 
 # (azınlık sınıfı dengelemek için).
+# Bu fonksiyon, bir veri kümesinde sınıf dengesini (class balance) analiz etmek için yazılmıştır. Yani kaç tane pozitif (1) ve negatif (0) örnek olduğunu bulur, ayrıca pozitif sınıfın ağırlığını (class weight) hesaplar.
 def class_ratio(y):
     pos = int(np.sum(y == 1))
     neg = int(np.sum(y == 0))
@@ -50,6 +51,8 @@ def eval_and_print(title, y_test, y_pred, y_proba):
         pass
 
 # Senaryo 1: Resampling yok
+# Bu kod parçası, dengesiz veri setleri için yeniden örnekleme (resampling) yapmadan iki farklı model (Logistic Regression ve XGBoost) eğitiyor.
+# Yani veriyi SMOTE gibi yöntemlerle değiştirmek yerine, modelin içindeki sınıf ağırlıklarını (class weights) kullanarak denge kuruyor.
 def scenario_no_resampling(save_tag="_cw"):
     """A) Resampling yok → LR(class_weight) ve XGB(scale_pos_weight)"""
     ensure_dir()

@@ -146,11 +146,12 @@ deployment:
 mlflow:
   tracking_uri: "http://localhost:5000"
   experiment_name: "fraud_detection"
+  log_models: false
   
   # Auto-logging
   autolog:
     sklearn: true
-    log_models: true
+    log_models: false
     log_model_signatures: true
     log_input_examples: true
   

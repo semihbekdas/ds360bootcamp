@@ -11,6 +11,7 @@ import numpy as np
 import joblib
 import mlflow
 import mlflow.sklearn
+from contextlib import nullcontext
 from pathlib import Path
 from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier, IsolationForest
@@ -23,7 +24,10 @@ import warnings
 
 # Local imports
 from preprocessing import FeaturePreprocessor, ImbalanceHandler
-from .evaluation import FraudEvaluator
+try:
+    from .evaluation import FraudEvaluator  # type: ignore
+except ImportError:
+    from evaluation import FraudEvaluator
 try:
     from explainability_clean import ModelExplainer
 except ImportError:
@@ -104,20 +108,52 @@ class FraudDetectionPipeline:
     def _setup_mlflow(self):
         """MLflow setup"""
         mlflow_config = self.config.get('mlflow', {})
-        
-        # Set tracking URI
-        tracking_uri = mlflow_config.get('tracking_uri', 'sqlite:///mlflow.db')
-        mlflow.set_tracking_uri(tracking_uri)
-        
-        # Set experiment
+        self.mlflow_log_models = mlflow_config.get('log_models', True)
+
+        default_store = Path.cwd() / "mlruns"
+        default_store.mkdir(parents=True, exist_ok=True)
+        default_tracking_uri = f"sqlite:///{(default_store / 'mlflow.db').as_posix()}"
+
+        tracking_uri = mlflow_config.get('tracking_uri') or default_tracking_uri
+        try:
+            mlflow.set_tracking_uri(tracking_uri)
+        except Exception as exc:
+            logger.warning(
+                "MLflow tracking URI '%s' kullanılamadı (%s). sqlite fallback'a geçiliyor.",
+                tracking_uri,
+                exc,
+            )
+            tracking_uri = default_tracking_uri
+            mlflow.set_tracking_uri(tracking_uri)
+
         experiment_name = mlflow_config.get('experiment_name', 'fraud_detection')
-        mlflow.set_experiment(experiment_name)
-        
-        # Auto-logging
-        if mlflow_config.get('autolog', {}).get('sklearn', True):
-            mlflow.sklearn.autolog()
-        
-        logger.info(f"MLflow configured - Experiment: {experiment_name}")
+        try:
+            mlflow.set_experiment(experiment_name)
+        except Exception as exc:
+            fallback_experiment = f"{experiment_name}_local"
+            logger.warning(
+                "MLflow experiment '%s' ayarlanamadı (%s). '%s' kullanılacak.",
+                experiment_name,
+                exc,
+                fallback_experiment,
+            )
+            if tracking_uri != default_tracking_uri:
+                tracking_uri = default_tracking_uri
+                mlflow.set_tracking_uri(tracking_uri)
+            mlflow.set_experiment(fallback_experiment)
+
+        autolog_config = mlflow_config.get('autolog', {})
+        if autolog_config.get('sklearn', True):
+            try:
+                mlflow.sklearn.autolog(
+                    log_models=autolog_config.get('log_models', True),
+                    log_model_signatures=autolog_config.get('log_model_signatures', True),
+                    log_input_examples=autolog_config.get('log_input_examples', True),
+                )
+            except Exception as exc:
+                logger.warning("MLflow autolog devreye alınamadı: %s", exc)
+
+        logger.info("MLflow configured - Tracking URI: %s", tracking_uri)
     
     def load_data(self, data_path=None, synthetic=True, download_with_kagglehub=False):
         """
@@ -344,66 +380,83 @@ class FraudDetectionPipeline:
         
         evaluation_config = self.config.get('evaluation', {})
         
-        for model_name, model in self.models.items():
-            logger.info(f"Evaluating {model_name}...")
-            
-            # Initialize evaluator
-            evaluator = FraudEvaluator(model, model_name)
-            
-            # Evaluate
-            if model_name in ['isolation_forest', 'lof']:
-                # Outlier detection evaluation
-                detector = OutlierDetector()
-                detector.scaler = self.preprocessor.scaler
-                
-                if model_name == 'isolation_forest':
-                    detector.isolation_forest = model
-                    predictions = detector.predict_isolation_forest(self.X_test_processed)
+        parent_run = mlflow.active_run()
+        parent_context = (
+            nullcontext()
+            if parent_run is not None
+            else mlflow.start_run(run_name=f"evaluation_{datetime.utcnow().isoformat()}"[:35])
+        )
+
+        with parent_context:
+            for model_name, model in self.models.items():
+                logger.info(f"Evaluating {model_name}...")
+
+                evaluator = FraudEvaluator(model, model_name)
+
+                if model_name in ['isolation_forest', 'lof']:
+                    model_cfg = self.config.get('models', {}).get(model_name, {})
+                    detector = OutlierDetector(
+                        contamination=model_cfg.get('contamination', 0.05),
+                        n_neighbors=model_cfg.get('n_neighbors', 20),
+                        random_state=self.config.get('data', {}).get('random_state', 42),
+                    )
+                    detector.scaler = getattr(self.preprocessor, 'scaler', None)
+
+                    if model_name == 'isolation_forest':
+                        detector.isolation_forest = model
+                        labels, scores = detector.predict_isolation_forest(self.X_test_processed)
+                    else:
+                        detector.lof = model
+                        labels, scores = detector.predict_lof(self.X_test_processed)
+
+                    results = evaluator.evaluate_binary_classification(
+                        self.X_test_processed,
+                        self.y_test_processed,
+                        y_pred_proba=scores,
+                        y_pred=labels,
+                    )
                 else:
-                    detector.lof = model
-                    predictions = detector.predict_lof(self.X_test_processed)
-                
-                # Create dummy probabilities for evaluation
-                y_pred_proba = predictions.astype(float)
-                results = evaluator.evaluate_binary_classification(
-                    self.X_test_processed, self.y_test_processed,
-                    y_pred_proba=y_pred_proba, y_pred=predictions
-                )
-            else:
-                # Supervised model evaluation
-                results = evaluator.evaluate_binary_classification(
-                    self.X_test_processed, self.y_test_processed
-                )
-            
-            self.evaluators[model_name] = evaluator
-            
-            # Log metrics to MLflow
-            with mlflow.start_run(nested=True):
-                mlflow.log_params(model.get_params() if hasattr(model, 'get_params') else {})
-                mlflow.log_metrics({
-                    f"{model_name}_roc_auc": results['roc_auc'],
-                    f"{model_name}_pr_auc": results['pr_auc'],
-                    f"{model_name}_f1_score": results['f1_score'],
-                    f"{model_name}_precision": results['precision'],
-                    f"{model_name}_recall": results['recall']
-                })
-                
-                # Log model
-                if model_name not in ['isolation_forest', 'lof']:
-                    mlflow.sklearn.log_model(model, f"{model_name}_model")
-            
-            # Print evaluation report
-            evaluator.print_evaluation_report()
-            
-            # Check performance thresholds
-            min_roc_auc = evaluation_config.get('min_roc_auc', 0.7)
-            min_pr_auc = evaluation_config.get('min_pr_auc', 0.3)
-            
-            if results['roc_auc'] < min_roc_auc:
-                logger.warning(f"{model_name} ROC-AUC ({results['roc_auc']:.4f}) below threshold ({min_roc_auc})")
-            
-            if results['pr_auc'] < min_pr_auc:
-                logger.warning(f"{model_name} PR-AUC ({results['pr_auc']:.4f}) below threshold ({min_pr_auc})")
+                    results = evaluator.evaluate_binary_classification(
+                        self.X_test_processed,
+                        self.y_test_processed,
+                    )
+
+                self.evaluators[model_name] = evaluator
+
+                with mlflow.start_run(run_name=f"{model_name}_evaluation", nested=True):
+                    if hasattr(model, 'get_params'):
+                        mlflow.log_params(model.get_params())
+                    mlflow.log_metrics({
+                        f"{model_name}_roc_auc": results['roc_auc'],
+                        f"{model_name}_pr_auc": results['pr_auc'],
+                        f"{model_name}_f1_score": results['f1_score'],
+                        f"{model_name}_precision": results['precision'],
+                        f"{model_name}_recall": results['recall'],
+                    })
+
+                    if self.mlflow_log_models and model_name not in ['isolation_forest', 'lof']:
+                        mlflow.sklearn.log_model(model, f"{model_name}_model")
+
+                evaluator.print_evaluation_report()
+
+                min_roc_auc = evaluation_config.get('min_roc_auc', 0.7)
+                min_pr_auc = evaluation_config.get('min_pr_auc', 0.3)
+
+                if results['roc_auc'] < min_roc_auc:
+                    logger.warning(
+                        "%s ROC-AUC (%.4f) threshold'un (%.4f) altında",
+                        model_name,
+                        results['roc_auc'],
+                        min_roc_auc,
+                    )
+
+                if results['pr_auc'] < min_pr_auc:
+                    logger.warning(
+                        "%s PR-AUC (%.4f) threshold'un (%.4f) altında",
+                        model_name,
+                        results['pr_auc'],
+                        min_pr_auc,
+                    )
         
         logger.info("Model evaluation completed")
     
@@ -424,31 +477,45 @@ class FraudDetectionPipeline:
             self.models[model_name],
             self.X_train_balanced,
             feature_names=list(self.X_train_processed.columns),
-            class_names=['Normal', 'Fraud']
+            class_names=['Normal', 'Fraud'],
+            y_train=self.y_train_balanced,
         )
         
-        # SHAP analysis
-        explainer_config = self.config.get('explainability', {}).get('shap', {})
-        self.explainer.initialize_shap(
-            explainer_type=explainer_config.get('explainer_type', 'auto'),
-            max_evals=explainer_config.get('max_evals', 100)
+        shap_config = self.config.get('explainability', {}).get('shap', {})
+        explainer_type = shap_config.get('explainer_type', 'tree')
+        shap_init_kwargs = {
+            k: v
+            for k, v in shap_config.items()
+            if k not in {'explainer_type', 'max_samples'}
+        }
+        shap_compute_kwargs = {
+            k: v
+            for k, v in shap_config.items()
+            if k != 'explainer_type'
+        }
+        shap_compute_kwargs.pop('max_samples', None)
+        shap_ready = self.explainer.initialize_shap(
+            explainer_type=explainer_type,
+            **shap_init_kwargs,
         )
-        
-        shap_values, X_sample = self.explainer.compute_shap_values(
-            self.X_test_processed,
-            max_samples=explainer_config.get('max_samples', 100)
-        )
-        
-        # Generate plots
-        self.explainer.plot_shap_summary(X_sample)
-        self.explainer.plot_shap_waterfall(X_sample, 0)
-        
-        # Global feature importance
-        importance = self.explainer.global_feature_importance(X_sample)
-        
-        # Fraud pattern analysis
+
+        X_sample = self.X_test_processed
+        shap_values = None
+        if shap_ready:
+            shap_values, X_sample = self.explainer.compute_shap_values(
+                self.X_test_processed,
+                max_samples=shap_config.get('max_samples', 100),
+                **shap_compute_kwargs,
+            )
+            if shap_values is not None:
+                self.explainer.plot_shap_summary(X_sample)
+                self.explainer.plot_shap_waterfall(X_sample, 0)
+
+        y_sample = self.y_test_processed[:len(X_sample)] if X_sample is not None else None
+        importance = self.explainer.global_feature_importance(X_sample, y_sample)
         fraud_patterns = self.explainer.analyze_fraud_patterns(
-            X_sample, self.y_test_processed[:len(X_sample)]
+            np.asarray(X_sample),
+            y_sample,
         )
         
         logger.info("Model explanation completed")
@@ -517,17 +584,29 @@ class FraudDetectionPipeline:
         
         # Make prediction
         model = self.models[model_name]
-        
+
         if model_name in ['isolation_forest', 'lof']:
-            # Outlier detection
-            predictions = model.predict(data_processed)
-            probabilities = np.where(predictions == -1, 0.8, 0.2)  # Convert to pseudo-probabilities
-            return predictions, probabilities
-        else:
-            # Supervised model
-            predictions = model.predict(data_processed)
-            probabilities = model.predict_proba(data_processed)[:, 1]
-            return predictions, probabilities
+            model_cfg = self.config.get('models', {}).get(model_name, {})
+            detector = OutlierDetector(
+                contamination=model_cfg.get('contamination', 0.05),
+                n_neighbors=model_cfg.get('n_neighbors', 20),
+                random_state=self.config.get('data', {}).get('random_state', 42),
+            )
+            detector.scaler = getattr(self.preprocessor, 'scaler', None)
+
+            X_array = data_processed.values if hasattr(data_processed, 'values') else data_processed
+            if model_name == 'isolation_forest':
+                detector.isolation_forest = model
+                labels, scores = detector.predict_isolation_forest(X_array)
+            else:
+                detector.lof = model
+                labels, scores = detector.predict_lof(X_array)
+            return labels, scores
+
+        # Supervised model
+        predictions = model.predict(data_processed)
+        probabilities = model.predict_proba(data_processed)[:, 1]
+        return predictions, probabilities
     
     def run_full_pipeline(self, data_path=None, save_models=True, use_kagglehub=False):
         """Full pipeline execution"""
@@ -595,41 +674,71 @@ def main():
     pipeline = FraudDetectionPipeline(args.config)
     
     if args.mode == 'train':
-        # Training mode
-        success = pipeline.run_full_pipeline(args.data, args.save_models, args.use_kagglehub)
-        sys.exit(0 if success else 1)
-        
-    elif args.mode == 'predict':
-        # Prediction mode
-        if args.load_models:
-            pipeline.load_models()
-        
-        # Demo prediction with synthetic data
-        pipeline.load_data(synthetic=True)
-        pipeline.preprocess_data()
-        
-        predictions, probabilities = pipeline.predict(
-            pipeline.X_test_processed.head(), args.model
+        success = pipeline.run_full_pipeline(
+            data_path=args.data,
+            save_models=args.save_models,
+            use_kagglehub=args.use_kagglehub,
         )
-        
+        sys.exit(0 if success else 1)
+
+    if args.mode == 'predict':
+        models_loaded = False
+        if args.load_models:
+            models_loaded = pipeline.load_models()
+            if not models_loaded:
+                print("⚠️  Kayıtlı modeller bulunamadı. Synthetic veri ile yeniden eğitim yapılacak.")
+
+        if not models_loaded:
+            run_ok = pipeline.run_full_pipeline(
+                data_path=args.data,
+                save_models=args.save_models or args.load_models,
+                use_kagglehub=args.use_kagglehub,
+            )
+            if not run_ok:
+                sys.exit(1)
+        else:
+            # Ensure we have data prepared for demonstration
+            pipeline.load_data(data_path=args.data, synthetic=(args.data is None))
+            pipeline.preprocess_data()
+
+        predictions, probabilities = pipeline.predict(
+            pipeline.X_test_processed.head(),
+            args.model,
+        )
+
         print("Sample Predictions:")
         for i, (pred, prob) in enumerate(zip(predictions[:5], probabilities[:5])):
             print(f"Sample {i}: Prediction={pred}, Probability={prob:.4f}")
-    
-    elif args.mode == 'explain':
-        # Explanation mode
+        return
+
+    if args.mode == 'explain':
+        models_loaded = False
         if args.load_models:
-            pipeline.load_models()
-        
-        # Load data and explain
-        pipeline.load_data(synthetic=True)
-        pipeline.preprocess_data()
-        
+            models_loaded = pipeline.load_models()
+            if not models_loaded:
+                print("⚠️  Kayıtlı modeller bulunamadı. Synthetic veri ile yeniden eğitim yapılacak.")
+
+        if not models_loaded:
+            run_ok = pipeline.run_full_pipeline(
+                data_path=args.data,
+                save_models=args.save_models or args.load_models,
+                use_kagglehub=args.use_kagglehub,
+            )
+            if not run_ok:
+                sys.exit(1)
+        else:
+            pipeline.load_data(data_path=args.data, synthetic=(args.data is None))
+            pipeline.preprocess_data()
+
         importance, patterns = pipeline.explain_models(args.model)
-        
+        if importance is None:
+            print("Explainability modülü aktif değil.")
+            return
+
         print("Top 10 Important Features:")
         for i, (feature, score) in enumerate(list(importance.items())[:10]):
             print(f"{i+1}. {feature}: {score:.4f}")
+        return
 
 
 if __name__ == "__main__":

@@ -49,8 +49,8 @@ Bir fintech girişimi, kısa vadeli kredi (loan) başvurularının **geri ödeni
 ### 📈 İş Problemi
 
 1. **Dengesiz Veri**: Çoğu müşteri krediyi ödüyor, az sayıda müşteri ödeyemiyor.
-2. **Yanlış Pozitif Maliyeti**: İyi müşteriyi reddetmek → gelir kaybı.
-3. **Yanlış Negatif Maliyeti**: Riskli müşteriye kredi vermek → direkt zarar.
+2. **Yanlış Pozitif Maliyeti**: İyi müşteriyi reddetmek → gelir kaybı. precision önemli.
+3. **Yanlış Negatif Maliyeti**: Riskli müşteriye kredi vermek → direkt zarar. recall önemli.
 4. **Hızlı Karar Gereksinimi**: Özellikle kısa vadeli kredilerde anlık skor çok önemli.
 
 ---
@@ -79,9 +79,65 @@ Bir fintech girişimi, kısa vadeli kredi (loan) başvurularının **geri ödeni
 
 ### 📊 Teknik Metrikler
 
-* **ROC AUC**: Ayırma gücü (0.75+ hedef)
+* **ROC AUC**: Ayırma gücü (0.75+ hedef)  
 * **Precision / Recall**: Riskli müşterileri doğru yakalama başarısı
-* **F1-Score**: Denge metriği
+* **F1-Score**: Denge metriği  “model hem doğru tahmin yapabiliyor mu, hem de yeterince pozitif bulabiliyor mu?” sorusunun cevabıdır.
+Yani precision ve recall arasında dengeyi sağlayan bir ortalamadır.
+
+
+### ROC Eğrisi Nedir?
+
+ROC eğrisi, farklı eşik (threshold) değerleri için modelin:
+
+True Positive Rate (TPR = Recall)
+
+False Positive Rate (FPR)
+
+arasındaki ilişkiyi gösteren bir grafiktir.
+
+**AUC (Area Under Curve)** ise bu eğrinin altındaki alanı ifade eder.
+
+### 🔍 Precision Nedir?
+Precision, “model pozitif dediğinde, gerçekten ne kadar doğru söylüyor?” sorusunun cevabıdır.
+Yani tahmin edilen pozitiflerin ne kadarının gerçekten pozitif olduğunu ölçer.
+
+Örnek:
+
+Bir e-posta filtreleme sistemini düşün:
+
+100 e-postadan 20’si spam (pozitif sınıf).
+
+Model 25 tanesini “spam” olarak etiketliyor.
+
+Bu 25’in 18’i gerçekten spam (TP = 18)
+
+7 tanesi aslında normal ama yanlışlıkla spam sanılmış (FP = 7)
+
+Precision = 18 / (18 + 7) = 0.72 (yani %72)
+→ Model “spam” dediğinde %72 oranında haklı.
+
+### 🔍 Recall Nedir?
+
+Recall, “gerçek pozitiflerin ne kadarını model bulabildi?” sorusunun cevabıdır.
+Yani tüm gerçek pozitifler arasında, modelin ne kadarını yakaladığını ölçer.
+
+💡 Örnek:
+
+Aynı e-posta filtresi örneğini düşünelim:
+
+100 e-postadan 20’si gerçekten spam.
+
+Model bu 20 spam’in 18’ini doğru yakaladı (TP = 18)
+
+Ama 2 tanesini gözden kaçırdı (FN = 2)
+
+Recall = 18 / (18 + 2) = 0.9 (yani %90)
+→ Model, tüm spam e-postaların %90’ını yakalayabiliyor.
+
+🎯 Özet fark (Precision vs Recall):
+Metrik	Soru	Odak Noktası
+Precision	Model “pozitif” dediğinde ne kadar doğru söylüyor?	Yanlış pozitifleri azaltmak
+Recall	Gerçek pozitiflerin ne kadarını buldu?	Kaçırılan pozitifleri azaltmak
 
 ### 💼 İş Metrikleri
 
