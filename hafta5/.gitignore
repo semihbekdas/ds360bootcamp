@@ -1,0 +1,452 @@
+# ====================================
+# M5 Forecasting Project .gitignore
+# ====================================
+
+# ====================================
+# Python
+# ====================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# ====================================
+# Machine Learning & Data Science
+# ====================================
+# Model files (large binary files)
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.model
+*.bin
+*.pt
+*.pth
+
+# Large datasets (should be downloaded separately)
+*.csv
+*.tsv
+*.parquet
+*.feather
+*.json
+*.jsonl
+*.xlsx
+*.xls
+
+# EXCEPTION: Keep small config and sample files
+!requirements.txt
+!docker-compose.yml
+!*config*.json
+!*sample*.csv
+!*test*.csv
+
+# MLflow tracking
+mlruns/
+mlartifacts/
+mlflow.db
+*.db
+
+# Weights & Biases
+wandb/
+
+# TensorBoard logs
+logs/
+tensorboard/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# ====================================
+# M5 Forecasting Specific
+# ====================================
+# Large M5 dataset files
+data/*.csv
+data/*.parquet
+data/*.feather
+!data/README.md
+
+# Model artifacts (can be large)
+artifacts/models/*.pkl
+artifacts/models/*.json
+artifacts/models/*.bin
+artifacts/models/*.h5
+
+# Generated predictions (can be regenerated)
+artifacts/preds/*.csv
+artifacts/preds/*.png
+artifacts/preds/*.jpg
+
+# Generated figures (can be regenerated)
+artifacts/figures/*.png
+artifacts/figures/*.jpg
+artifacts/figures/*.pdf
+artifacts/figures/*.svg
+
+# Generated reports (can be regenerated)
+artifacts/reports/*.html
+artifacts/reports/*.pdf
+
+# EXCEPTION: Keep important small files
+!artifacts/reports/*.md
+!artifacts/reports/*.json
+
+# Temporary processing files
+temp/
+tmp/
+scratch/
+
+# ====================================
+# Operating System
+# ====================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ====================================
+# IDEs and Editors
+# ====================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ====================================
+# Cloud and CI/CD
+# ====================================
+# AWS
+.aws/
+
+# Google Cloud
+.gcloud/
+gcloud-service-key.json
+
+# Azure
+.azure/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Kubernetes
+*.kubeconfig
+
+# ====================================
+# Secrets and API Keys
+# ====================================
+# API keys and secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.key
+*.pem
+*.p12
+*.crt
+*.cert
+*.der
+secrets.json
+credentials.json
+config.ini
+.secrets/
+
+# Kaggle API credentials
+kaggle.json
+.kaggle/
+
+# MLflow credentials
+.mlflow_credentials
+
+# ====================================
+# Large Files and Outputs
+# ====================================
+# Large data files (>100MB should use Git LFS or external storage)
+*.zip
+*.tar.gz
+*.tar.bz2
+*.7z
+*.rar
+
+# Video and audio files
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.mp3
+*.wav
+*.flac
+
+# Large images
+*.tiff
+*.tif
+*.raw
+
+# ====================================
+# Development and Testing
+# ====================================
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+htmlcov/
+test-results/
+coverage/
+
+# Profiling
+*.prof
+*.lprof
+
+# Benchmarking
+benchmark_results/
+
+# ====================================
+# Project Specific Exceptions
+# ====================================
+# Keep these important files even if they match patterns above
+!README.md
+!STRUCTURE.md
+!DOCKER_README.md
+!requirements.txt
+!Dockerfile
+!docker-compose.yml
+!.gitignore
+
+# Keep small sample datasets for testing
+!*sample*.csv
+!*test*.csv
+!*demo*.csv
+
+# Keep small configuration files
+!*config*.json
+!*config*.yaml
+!*config*.yml
+
+# ====================================
+# Generated Documentation
+# ====================================
+# Sphinx
+docs/_build/
+docs/source/_autosummary/
+
+# MkDocs
+site/
+
+# GitBook
+_book/
+
+# ====================================
+# Backup Files
+# ====================================
+*.bak
+*.backup
+*.old
+*.orig
+*~
+.#*
+#*#
+
+# ====================================
+# Logs and Debugging
+# ====================================
+*.log
+*.out
+*.err
+logs/
+log/
+
+# Debug files
+debug/
+.debug/
+core.*
+
+# ====================================
+# Performance and Profiling
+# ====================================
+# Python profiling
+*.pstats
+*.prof
+
+# Memory profiling
+*.mprof
+
+# ====================================
+# End of .gitignore
+# ====================================

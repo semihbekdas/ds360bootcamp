@@ -36,11 +36,27 @@ Kapsamlı Data Science ve MLOps eğitimi - 10 haftalık program
   - Production-ready MLOps pipeline
   - Interactive demo ve comprehensive evaluation
 
-### 🔜 Hafta 5
-- *İçerik belirlenecek*
+### ✅ Hafta 5 - Time Series Forecasting: M5 Competition 🏪
+**Konular:** ARIMA, Prophet, LightGBM, Time Series CV, Prefect Automation, Docker Deployment
+- 🏪 [hafta5](hafta5/) - **M5 Forecasting Modular Pipeline**
+  - 📖 **M5 Dataset Story**: Walmart'ın 5 yıllık satış verisi (2011-2016)
+  - 🏗️ **Modular Architecture**: 7 specialized modules (P1-P7)
+  - 📊 **Model Comparison**: ARIMA (~46% sMAPE) vs Prophet (~28% sMAPE) vs LightGBM (~33% sMAPE)
+  - ⚙️ **Feature Engineering**: Lag, rolling, seasonal features
+  - ✅ **Time Series CV**: Rolling-origin cross-validation (proper temporal splitting)
+  - 🔄 **Prefect Automation**: Daily forecasting pipeline (09:00 Europe/Istanbul)
+  - 🐳 **Docker Ready**: Production containerization with volume mounting
+  - 📚 **Comprehensive Docs**: 1,500+ line documentation with dataset story
 
-### 🔜 Hafta 6
-- *İçerik belirlenecek*
+### ✅ Hafta 6 - Market Basket Analysis 🛒
+**Konular:** Association Rules, Support-Confidence-Lift, Cross-selling, Interactive Analysis
+- 🛒 [hafta6](hafta6/) - **Market Sepeti Analizi Projesi**
+  - Market Basket Analysis temelleri
+  - Support, Confidence, Lift kavramları
+  - Association Rules ve ürün birliktelikleri
+  - Cross-selling ve mağaza optimizasyonu
+  - Interactive Streamlit dashboard
+  - 📊 999 sepet x 16 ürün veri seti analizi
 
 ### 🔜 Hafta 7
 - *İçerik belirlenecek*
@@ -55,6 +71,21 @@ Kapsamlı Data Science ve MLOps eğitimi - 10 haftalık program
 - *Proje sunumları ve değerlendirme*
 
 ## 🚀 Bu Hafta İçin Hızlı Başlangıç
+
+### Hafta 6 - Market Basket Analysis
+```bash
+# Proje klasörüne git
+cd hafta6/
+
+# Virtual environment aktifleştir
+source venv/bin/activate
+
+# Konsol uygulaması çalıştır
+python basit_market_analizi.py
+
+# Web dashboard başlat
+streamlit run basit_streamlit_app.py
+```
 
 ### Hafta 4 - Fraud Detection
 ```bash
@@ -131,6 +162,14 @@ uvicorn src.api:app --reload
 4. **Explainability** → SHAP & LIME model interpretation
 5. **CI/CD Pipeline** → Production deployment strategies
 6. **Business Impact** → Cost-benefit analysis & threshold optimization
+
+### Hafta 6 - Market Basket Analysis
+1. **Data Understanding** → Transaction data and product relationships
+2. **Support Calculation** → Item frequency analysis
+3. **Association Rules** → Confidence and lift metrics
+4. **Interactive Analysis** → Streamlit dashboard development
+5. **Business Applications** → Cross-selling and store optimization
+6. **Advanced Patterns** → Multi-item combinations and recommendations
 
 ## 📖 Ek Kaynaklar
 
